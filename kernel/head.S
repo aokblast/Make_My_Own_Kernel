@@ -45,14 +45,54 @@ entry64:
   movq %rax, %ss
   movq $0xffff800000007E00, %rsp
 
+// set handler TSS
+
 setup_IDT:
+  
   leaq ignore_int(%rip), %rdx
+
   movq $(0x08 << 16), %rax
   movw %dx, %ax
   movq $(0x8E00 << 32), %rcx
   addq %rcx, %rax
   movl %edx, %ecx
+  shrl $16, %ecx
+  shlq $48, %rcx
+  addq %rcx, %rax
+  shrq $32, %rdx
+  leaq IDT_Table(%rip), %rdi
+  mov $256, %rcx
 
+rp_sidt:
+  movq %rax, (%rdi)
+  movq %rdx, 8(%rdi)
+  addq $0x10, %rdi
+  dec %rcx
+  jne rp_sidt
+
+setup_TSS64:
+  leaq TSS64_Table(%rip), %rdx
+  xorq %rax, %rax
+  xorq %rcx, %rcx
+  movq $0x89, %rax
+  shlq $40, %rax
+  movl %edx, %ecx
+  shrl $24, %ecx
+  shlq $56, %rcx
+  addq %rcx, %rax
+  xorq %rcx, %rcx
+  movl %edx, %ecx
+  andl $0xffffff, %ecx
+  shlq $16, %rcx
+  addq %rcx, %rax
+  addq $103, %rax
+  leaq GDT_Table(%rip), %rdi
+  movq %rax, 64(%rdi)
+  shrq $32, %rdx
+  movq %rdx, 72(%rdi)
+
+  mov $0x40, %ax
+  ltr %ax
 
   movq go_to_kernel(%rip), %rax
   pushq $0x08
@@ -98,8 +138,31 @@ ignore_int:
   movq $0, %rax
   callq color_printk
   addq $0x8, %rsp
+Loop:
+  jmp Loop
 
+  popq %rax
+  movq %rax, %ds
+  popq %rax
+  movq %rax, %es
 
+  popq %r15
+  popq %r14
+  popq %r13
+  popq %r12
+  popq %r11
+  popq %r10
+  popq %r9
+  popq %r8
+
+  popq	%rsi
+	popq	%rdi
+	popq	%rbp
+	popq	%rdx
+	popq	%rcx
+	popq	%rbx
+	popq	%rax
+  iretq
 
 int_msg:
   .asciz "Unknow interrupt or fault at RIP\n"
