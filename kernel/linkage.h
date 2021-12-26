@@ -16,7 +16,7 @@
 
 
 #define ENTRY(name) \
-.global SYNBOL_NAME(name); \
+.global SYMBOL_NAME(name); \
 SYMBOL_NAME_LABEL(name) 
 
 #endif

@@ -19,43 +19,43 @@ struct List{
     struct List *next;
 };
 
-inline void list_init(struct List *list){
+static inline void list_init(struct List *list){
     list->prev = list;
     list->next = list;
 }
 
-inline void list_add_before(struct List *entry, struct List *newNode){
+static inline void list_add_before(struct List *entry, struct List *newNode){
     newNode->next = entry;
     entry->prev->next = newNode;
     newNode->prev = entry->prev;
     entry->prev = newNode;
 }
 
-inline void list_add_behind(struct List *entry, struct List *newNode){
+static inline void list_add_behind(struct List *entry, struct List *newNode){
     newNode->next = entry->next;
     newNode->prev = entry;
     entry->next->prev = newNode;
     entry->next = newNode;
 }
 
-inline void list_del(struct List *entry){
+static inline void list_del(struct List *entry){
     entry->prev->next = entry->next;
     entry->next->prev = entry->prev;
 }
 
-inline long list_isEmpty(struct List* entry){
+static inline long list_isEmpty(struct List* entry){
     return entry == entry->next && entry == entry->prev;
 }
 
-inline struct List *list_prev(struct List *entry){
+static inline struct List *list_prev(struct List *entry){
     return entry->prev;
 }
 
-inline struct List *list_next(struct List *entry){
+static inline struct List *list_next(struct List *entry){
     return entry->next;
 }
 
-inline void *memcpy(void *from, void *to, long size){
+static inline void *memcpy(void *from, void *to, long size){
     int d0, d1, d2;
     __asm__ __volatile__ (  "cld     \n\t"
                             "rep     \n\t"
@@ -78,7 +78,7 @@ inline void *memcpy(void *from, void *to, long size){
     return to;
 }
 
-inline int memcmp(void *from, void *to, long size){
+static inline int memcmp(void *from, void *to, long size){
     register int res;
     __asm__ __volatile__ ( "cld \n\t"
                            "rep \n\t"
@@ -94,7 +94,7 @@ inline int memcmp(void *from, void *to, long size){
     return res;
 }
 
-inline void *memset(void *to, char c, long size){
+static inline void *memset(void *to, char c, long size){
     int d0, d1;
     unsigned long tmp =  0x0101010101010101UL * c;
     __asm__ __volatile__ (
@@ -118,7 +118,7 @@ inline void *memset(void *to, char c, long size){
     return to;
 }
 
-inline char *strcpy(char *dest, char *src){
+static inline char *strcpy(char *dest, char *src){
     __asm__ __volatile__ (
                             "cld \n\t"
                             "1: \n\t"
@@ -132,7 +132,7 @@ inline char *strcpy(char *dest, char *src){
     return dest;
 }
 
-inline char *strncpy(char *dest, char *src, long size){
+static inline char *strncpy(char *dest, char *src, long size){
     __asm__ __volatile__ ( "cld \n\t"
                            "1: \n\t"
                            "decq %2 \n\t"
@@ -152,7 +152,7 @@ inline char *strncpy(char *dest, char *src, long size){
     return dest;
 }
 
-inline char *strcat(char *dest, char *src){
+static inline char *strcat(char *dest, char *src){
     __asm__ __volatile__ ( "cld \n\t"
                            "repne \n\t"
                            "scasb \n\t"
@@ -170,7 +170,7 @@ inline char *strcat(char *dest, char *src){
     return dest;
 }
 
-inline int strcmp(char *str1, char *str2){
+static inline int strcmp(char *str1, char *str2){
     register int res;
     __asm__ __volatile__ ( "cld \n\t"
                            "1: \n\t"
@@ -194,7 +194,7 @@ inline int strcmp(char *str1, char *str2){
     return res;
 }
 
-inline int strncmp(char *str1, char *str2, long size){
+static inline int strncmp(char *str1, char *str2, long size){
     register int res;
     __asm__ __volatile__ ( "cld \n\t"
                            "1: \n\t"
@@ -221,21 +221,34 @@ inline int strncmp(char *str1, char *str2, long size){
     return res;
 }
 
+static inline int strlen(char *str){
+    register int res;
+    __asm__ __volatile__ ( "cld \n\t"
+                           "repne \n\t"
+                           "scasb \n\t"
+                           "notl %0 \n\t"
+                           "dec %0 \n\t"
+                           :"=c"(res)
+                           :"D"(str), "a"(0), "0"(0xffffffff)
+                           :
 
+    );
+    return res;
+}
 
-inline unsigned long bit_set(unsigned long *addr, unsigned long loc){
+static inline unsigned long bit_set(unsigned long *addr, unsigned long loc){
     return *addr | (1UL << loc);
 }
 
-inline unsigned long bit_get(unsigned long *addr, unsigned long loc){
+static inline unsigned long bit_get(unsigned long *addr, unsigned long loc){
     return *addr & (1UL << loc);
 }
 
-inline unsigned long bit_clean(unsigned long *addr, unsigned long loc){
+static inline unsigned long bit_clean(unsigned long *addr, unsigned long loc){
     return *addr & (~(1UL << loc));
 }
 
-inline unsigned char io_in8(unsigned short port){
+static inline unsigned char io_in8(unsigned short port){
     unsigned char res = 0;
     __asm__ __volatile__( "inb %%dx, %0 \n\t"
                           "mfence \n\t"
@@ -247,7 +260,7 @@ inline unsigned char io_in8(unsigned short port){
     return res;
 }
 
-inline unsigned int io_in32(unsigned short port){
+static inline unsigned int io_in32(unsigned short port){
     unsigned int res = 0;
     __asm__ __volatile__( "inl %%dx, %0 \n\t"
                           "mfence \n\t"
@@ -259,7 +272,7 @@ inline unsigned int io_in32(unsigned short port){
     return res;
 }
 
-inline unsigned char io_out8(unsigned short port){
+static inline unsigned char io_out8(unsigned short port){
     unsigned char res = 0;
     __asm__ __volatile__( "outb %0, %%dx \n\t"
                           "mfence \n\t"
@@ -271,7 +284,7 @@ inline unsigned char io_out8(unsigned short port){
     return res;
 }
 
-inline unsigned int io_out32(unsigned short port){
+static inline unsigned int io_out32(unsigned short port){
     unsigned int res = 0;
     __asm__ __volatile__( "outl %0, %%dx \n\t"
                           "mfence \n\t"

@@ -23,22 +23,6 @@ void putchar(unsigned int *fb, int xsize, int x, int y, unsigned int FRcolor, un
 }
 
 
-int strlen(char *str){
-    register int res;
-    __asm__ __volatile__ ( "cld \n\t"
-                           "repne \n\t"
-                           "scasb \n\t"
-                           "notl %0 \n\t"
-                           "dec %0 \n\t"
-                           :"=c"(res)
-                           :"D"(str), "a"(0), "0"(0xffffffff)
-                           :
-
-    );
-    return res;
-}
-
-
 int skip_atoi(const char **s){
     int res = 0;
     while(is_digit(**s)) res = res * 10 - '0' + *((*s)++); 
@@ -126,7 +110,7 @@ int vsprintf(char *buf, const char *fmt, va_list args){
             }
 
             qualifier = -1;
-            if(*fmt == 'h' || *fmt == '1' || *fmt == 'L' || *fmt == 'Z'){
+            if(*fmt == 'h' || *fmt == 'l' || *fmt == 'L' || *fmt == 'Z'){
                 qualifier = *fmt;
                 ++fmt;
             }
@@ -134,7 +118,7 @@ int vsprintf(char *buf, const char *fmt, va_list args){
             switch(*fmt){
                 case 'c':
                     if(!(flags & LEFT)) while((--field_width) > 0) *str++ = ' ';
-                    *str = (unsigned char) va_arg(args, int);
+                    *str++ = (unsigned char) va_arg(args, int);
                     while((--field_width) > 0) *str++ = ' ';
                     break;
                 case 's':
@@ -188,8 +172,7 @@ int vsprintf(char *buf, const char *fmt, va_list args){
                     break;
                 default:
                     *str++ = '%';
-                    if(*fmt)
-                    *str++ = *fmt;
+                    if(*fmt)*str++ = *fmt;
                     else fmt--;
                     break;
 
