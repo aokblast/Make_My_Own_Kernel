@@ -94,7 +94,7 @@ static inline int memcmp(void *from, void *to, long size){
     return res;
 }
 
-static inline void *memset(void *to, char c, long size){
+static inline void *memset(void *to,  unsigned char c, long size){
     int d0, d1;
     unsigned long tmp =  0x0101010101010101UL * c;
     __asm__ __volatile__ (

@@ -26,6 +26,6 @@ void machine_check();
 void SIMD_exception();
 void virtualization_exception();
 
-void sys_int_vec_init();
+void sys_vector_init();
 
 #endif

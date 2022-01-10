@@ -1,4 +1,8 @@
+#ifndef __MEMORY_H__
+#define __MEMORY_H__
+
 #include "lib.h"
+#include "printk.h"
 
 #define PAGE_OFFSET	((unsigned long)0xffff800000000000)
 #define PTRS_PER_PAGE 512
@@ -104,6 +108,8 @@ struct Zone{
 extern struct Global_Memory_Descriptor memory_management_struct;
 
 void init_memory();
+struct Page* alloc_pages(int zone_select, int number, unsigned long flags);
+
 
 int ZONE_DMA_INDEX	= 0;
 int ZONE_NORMAL_INDEX	= 0;	//low 1GB RAM ,was mapped in pagetable
@@ -134,3 +140,5 @@ do \
 }while(0)\
 
 unsigned long * Global_CR3 = NULL;
+
+#endif

@@ -1,24 +1,24 @@
 #include "memory.h"
 #include "lib.h"
-#include "printk.h"
+
 
 unsigned long page_init(struct Page *p, unsigned long flags){
-    if(!p->attr){
-        *(memory_management_struct.bits_map + ((p->PHY_address >> PAGE_2M_SHIFT) >> 6)) |= 1UL << ((p->PHY_address) >> PAGE_2M_SHIFT) % 64;
-        p->attr = flags;
-        ++p->ref_cnt;
-        --p->zone_struct->page_using_cnt;
-        ++p->zone_struct->page_free_cnt;
-        ++p->zone_struct->tot_pages_link;
-    }else if((p->attr & PG_Referenced) || (p->attr & PG_K_Share_To_U) || (flags & PG_Referenced || (flags & PG_K_Share_To_U))){
-        p->attr |= flags;
-        ++p->ref_cnt;
-        ++p->zone_struct->tot_pages_link;
-    }else{
-        *(memory_management_struct.bits_map + ((p->PHY_address >> PAGE_2M_SHIFT) >> 6)) |= 1UL << (p->PHY_address >> PAGE_2M_SHIFT) % 64;
-        p->attr |= flags;
-    }
-    return 0;
+	if(!p->attr){
+		*(memory_management_struct.bits_map + ((p->PHY_address >> PAGE_2M_SHIFT) >> 6)) |= 1UL << (p->PHY_address >> PAGE_2M_SHIFT) % 64;
+		p->attr = flags;
+		p->ref_cnt++;
+		p->zone_struct->page_using_cnt++;
+		p->zone_struct->page_free_cnt--;
+		p->zone_struct->tot_pages_link++;
+	}else if((p->attr & PG_Referenced) || (p->attr & PG_K_Share_To_U) || (flags & PG_Referenced) || (flags & PG_K_Share_To_U)){
+		p->attr |= flags;
+		p->ref_cnt++;
+		p->zone_struct->tot_pages_link++;
+	}else{
+		*(memory_management_struct.bits_map + ((p->PHY_address >> PAGE_2M_SHIFT) >> 6)) |= 1UL << (p->PHY_address >> PAGE_2M_SHIFT) % 64;	
+		p->attr |= flags;
+	}
+	return 0;
 }
 
 void init_memory(){
@@ -33,6 +33,7 @@ void init_memory(){
         unsigned long tmp = 0;
         
         memory_management_struct.e820[i] = *p;
+        
         if(p->type == 1)totalMem += memory_management_struct.e820[i].len;
         memory_management_struct.e820_len = i + 1;
         p++;
@@ -71,7 +72,7 @@ void init_memory(){
 
     memset(memory_management_struct.zones_struct, 0x00, memory_management_struct.zones_len);
 
-    for(int i = 0; i < memory_management_struct.e820_len; ++i){
+    for(i = 0; i < memory_management_struct.e820_len; ++i){
         struct Zone *z;
         struct Page *p;
         unsigned long *b;
@@ -99,10 +100,12 @@ void init_memory(){
         z->pages_group = (struct Page *)(memory_management_struct.pages_struct + (start >> PAGE_2M_SHIFT));
 
         p = z->pages_group;
+        
         for(int j = 0; j < z->pages_len; ++j, ++p){
             p->zone_struct = z;
             p->attr = 0;
             p->PHY_address = start + j * PAGE_2M_SIZE;
+
             p->ref_cnt = 0;
             p->age = 0;
 
@@ -142,8 +145,7 @@ void init_memory(){
     color_printk(ORANGE,BLACK,"start_code:%#018lx,end_code:%#018lx,end_data:%#018lx,end_brk:%#018lx,end_of_struct:%#018lx\n",memory_management_struct.start_code,memory_management_struct.end_code,memory_management_struct.end_data,memory_management_struct.end_brk, memory_management_struct.end_struct);
 
     int idx = Virt_To_Phy(memory_management_struct.end_struct) >> PAGE_2M_SHIFT;
-
-    for(int j = 0; j <= idx; ++j){
+    for( j = 0; j <= idx; ++j){
         page_init(memory_management_struct.pages_struct + j, PG_PTable_Maped | PG_Kernel_Init | PG_Active | PG_Kernel);
     }
 
@@ -155,11 +157,62 @@ void init_memory(){
 
     for(int i = 0; i < 10; ++i) *(Phy_To_Virt(Global_CR3) + i) = 0UL;
 
-    flush_tlb();
-
-    
+    flush_tlb();   
 }
 
 struct Page* alloc_pages(int zone_select, int number, unsigned long flags){
+    int i = 0, zone_start = 0, zone_end = 0;
+    unsigned long page;
+    struct Zone *z;
+    struct Page *p;
+    switch(zone_select){
+        case ZONE_DMA:
+            zone_start = 0;
+            zone_end = ZONE_DMA_INDEX;
+            break;
+        case ZONE_NORMAL:
+            zone_start = ZONE_DMA_INDEX;
+            zone_end = ZONE_NORMAL_INDEX;
+            break;
+        case ZONE_UNMAPED:
+            zone_start = ZONE_UNMAPED_INDEX;
+            zone_end = memory_management_struct.zones_size - 1;
+            break;
+        default:
+			color_printk(RED,BLACK,"alloc_pages error zone_select index\n");
+			return NULL;
+			break;
+    }
 
+    
+    for(i = zone_start; i <= zone_end; ++i){
+        unsigned long j, tmp, start, end, len;
+        z = (memory_management_struct.zones_struct + i);
+        if(z->page_free_cnt < number)continue;
+        start = z->zone_start_addr >> (PAGE_2M_SHIFT);
+        end = z->zone_end_addr >> (PAGE_2M_SHIFT);
+        len = z->zone_len >> (PAGE_2M_SHIFT);
+        tmp = 64 - start % 64;
+        for(j = start; j <= end; j += j % 64 ? tmp : 64){
+            unsigned long *map = memory_management_struct.bits_map + (j >> 6);
+            unsigned long offset = j % 64;
+            unsigned long k;
+            for(k = offset; k < 64 - offset; ++k){
+                if( !(((*map >> k) | (*(map + 1) << (64 - k))) & (number == 64 ? 0xffffffffffffffffUL : ((1UL << number) - 1))) ){
+                    unsigned long l;
+                    page =  j + k - 1;
+                    for(l = 0; l < number; ++l){
+                        p = memory_management_struct.pages_struct + page + l;
+                        page_init(p, flags);
+                    }
+                    goto find_avaliable_pages;
+                }
+            }
+        }
+    }
+
+    return NULL;
+
+    find_avaliable_pages:
+        return (struct Page *)(memory_management_struct.pages_struct + page);
 }

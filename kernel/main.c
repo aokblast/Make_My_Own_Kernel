@@ -22,18 +22,7 @@ void Start_Kernel(void){
     Pos.yCharSize = 16;
 
     Pos.FB_addr = addr;
-    Pos.FB_length = (Pos.xRes * Pos.yRes * 4);
-
-    for(int i = 0; i < 1440 * 20; ++i){
-        *((char*) addr + 0) = (char) 0x00;
-        *((char*) addr + 1) = (char) 0x00;
-        *((char*) addr + 2) = (char) 0xff;
-        *((char*) addr + 3) = (char) 0x00;
-        ++addr;
-
-    }
-    color_printk(YELLOW, BLACK, "Hello\t\t World!\n");
-
+    Pos.FB_length = (Pos.xRes * Pos.yRes * 4 + PAGE_4K_SIZE - 1) & PAGE_4K_MASK;
     
     load_TR(8);
 
@@ -49,6 +38,17 @@ void Start_Kernel(void){
     color_printk(RED, BLACK, "Memory Init\n");
 
     init_memory();
+
+    color_printk(RED,BLACK,"memory_management_struct.bits_map:%#018lx\n",*memory_management_struct.bits_map);
+	color_printk(RED,BLACK,"memory_management_struct.bits_map:%#018lx\n",*(memory_management_struct.bits_map + 1));
+	struct Page *page = alloc_pages(ZONE_NORMAL,64,PG_PTable_Maped | PG_Active | PG_Kernel);
+	for(int i = 0;i < 64;i++){
+		color_printk(INDIGO,BLACK,"page%d\tattribute:%#018lx\taddress:%#018lx\t",i,(page + i)->attr,(page + i)->PHY_address);
+		i++;
+		color_printk(INDIGO,BLACK,"page%d\tattribute:%#018lx\taddress:%#018lx\n",i,(page + i)->attr,(page + i)->PHY_address);
+	}
+	color_printk(RED,BLACK,"memory_management_struct.bits_map:%#018lx\n",*memory_management_struct.bits_map);
+	color_printk(RED,BLACK,"memory_management_struct.bits_map:%#018lx\n",*(memory_management_struct.bits_map + 1));
     
     while(1);
 
