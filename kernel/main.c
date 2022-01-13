@@ -3,6 +3,7 @@
 #include "gate.h"
 #include "trap.h"
 #include "memory.h"
+#include "interrupt.h"
 
 struct Global_Memory_Descriptor memory_management_struct = {{0},0};
 
@@ -39,17 +40,9 @@ void Start_Kernel(void){
 
     init_memory();
 
-    color_printk(RED,BLACK,"memory_management_struct.bits_map:%#018lx\n",*memory_management_struct.bits_map);
-	color_printk(RED,BLACK,"memory_management_struct.bits_map:%#018lx\n",*(memory_management_struct.bits_map + 1));
-	struct Page *page = alloc_pages(ZONE_NORMAL,64,PG_PTable_Maped | PG_Active | PG_Kernel);
-	for(int i = 0;i < 64;i++){
-		color_printk(INDIGO,BLACK,"page%d\tattribute:%#018lx\taddress:%#018lx\t",i,(page + i)->attr,(page + i)->PHY_address);
-		i++;
-		color_printk(INDIGO,BLACK,"page%d\tattribute:%#018lx\taddress:%#018lx\n",i,(page + i)->attr,(page + i)->PHY_address);
-	}
-	color_printk(RED,BLACK,"memory_management_struct.bits_map:%#018lx\n",*memory_management_struct.bits_map);
-	color_printk(RED,BLACK,"memory_management_struct.bits_map:%#018lx\n",*(memory_management_struct.bits_map + 1));
-    
+    color_printk(RED,BLACK,"interrupt init \n");
+
+	init_intr();
     while(1);
 
 }
