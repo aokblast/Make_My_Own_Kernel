@@ -272,29 +272,24 @@ static inline unsigned int io_in32(unsigned short port){
     return res;
 }
 
-static inline unsigned char io_out8(unsigned short port){
-    unsigned char res = 0;
-    __asm__ __volatile__( "outb %0, %%dx \n\t"
-                          "mfence \n\t"
-                          :
-                          :"a"(res), "d"(port)
-                          :"memory"
-
-    );
-    return res;
+static inline void io_out8(unsigned short port,unsigned char value)
+{
+	__asm__ __volatile__(	"outb	%0,	%%dx	\n\t"
+				"mfence			\n\t"
+				:
+				:"a"(value),"d"(port)
+				:"memory");
 }
 
-static inline unsigned int io_out32(unsigned short port){
-    unsigned int res = 0;
-    __asm__ __volatile__( "outl %0, %%dx \n\t"
-                          "mfence \n\t"
-                          :
-                          :"a"(res), "d"(port)
-                          :"memory"
-
-    );
-    return res;
+static inline void io_out32(unsigned short port,unsigned int value)
+{
+	__asm__ __volatile__(	"outl	%0,	%%dx	\n\t"
+				"mfence			\n\t"
+				:
+				:"a"(value),"d"(port)
+				:"memory");
 }
+
 
 #define port_insw(port, buffer, size) __asm__ __volatile__("cld;rep;insw;mfence;"::"d"(port), "D"(buffer), "c"(size):"memory")
 
