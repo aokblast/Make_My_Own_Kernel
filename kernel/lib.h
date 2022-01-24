@@ -67,7 +67,7 @@ static inline void *memcpy(void *from, void *to, long size){
                             "je 2f \n\t"
                             "movsw \n\t"
                             "2:\ttestb $1, %b4 \n\t"
-                            "je 3f"
+                            "je 3f \n\t"
                             "movsb \n\t"
                             "3: \n\t"
                             :"=&c"(d0), "=&D"(d1), "=&S"(d2)
