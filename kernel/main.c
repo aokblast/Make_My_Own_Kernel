@@ -4,6 +4,7 @@
 #include "trap.h"
 #include "memory.h"
 #include "interrupt.h"
+#include "task.h"
 
 struct Global_Memory_Descriptor memory_management_struct = {{0},0};
 
@@ -37,12 +38,14 @@ void Start_Kernel(void){
     memory_management_struct.end_brk = (unsigned long)& _end;
 
     color_printk(RED, BLACK, "Memory Init\n");
-
     init_memory();
 
-    color_printk(RED,BLACK,"interrupt init \n");
+    color_printk(RED, BLACK, "interrupt init \n");
+	  init_intr();
+    
+    color_printk(RED, BLACK, "task init \n");
+    task_init();
 
-	init_intr();
     while(1);
 
 }
