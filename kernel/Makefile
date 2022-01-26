@@ -13,10 +13,10 @@ entry.o: entry.S
 	as --64 -o entry.o entry.s
 
 main.o: main.c
-	gcc -static -mcmodel=large -fno-builtin -m64 -c main.c -fno-stack-protector
+	gcc -mcmodel=large -fno-builtin -m64 -c main.c -fno-stack-protector
 
-printk.o: printk.c lib.h
-	gcc -static -mcmodel=large -fno-builtin -m64 -c printk.c -fno-stack-protector
+printk.o: printk.c
+	gcc -mcmodel=large -fno-builtin -m64 -c printk.c -fno-stack-protector
 
 trap.o: trap.c
 	gcc  -mcmodel=large -fno-builtin -m64 -c trap.c -fno-stack-protector
@@ -28,7 +28,7 @@ interrupt.o: interrupt.c
 	gcc  -mcmodel=large -fno-builtin -m64 -c interrupt.c -fno-stack-protector 
 
 task.o: task.c
-	gcc  -mcmodel=large -fno-builtin -m64 -c task.c -fno-stack-protector
+	gcc -mcmodel=large -fno-builtin -m64 -c task.c -fno-stack-protector
 
 clean:
 	rm -rf *.o *.s~ *.s *.S~ *.c~ *.h~ system Makefile~ Kernel.lds~ kernel.bin
