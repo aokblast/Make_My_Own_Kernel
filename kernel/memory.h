@@ -141,7 +141,7 @@ do \
         :           \
         :"memory"\
     );\
-}while(0)\
+}while(0)
 
 unsigned long * Global_CR3 = NULL;
 
