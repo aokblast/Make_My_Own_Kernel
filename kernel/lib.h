@@ -6,7 +6,7 @@
 #define container_of(ptr, type, member)  \
 ({                                       \
     typeof(((type *)0)->member) *p = (ptr); \
-    (type*)(unsigned long)p - (unsigned long)&((((type *)0)->member)); \
+    (type*)((unsigned long)p - (unsigned long)&(((type *)0)->member)); \
 })
 
 #define sti() __asm__ __volatile__ ("sti    \n\t":::"memory")
@@ -111,7 +111,7 @@ static inline void *memset(void *to,  unsigned char c, long size){
                            "je 3f \n\t"
                            "stosb \n\t"
                            "3: \n\t"
-                           :"=&c"(d0), "=%D"(d1)
+                           :"=&c"(d0), "=&D"(d1)
                            :"a"(tmp), "q"(size), "0"(size / 8), "1"(to)
                            :"memory"
     );
